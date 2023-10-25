@@ -1,0 +1,60 @@
+<!Doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test chat</title>
+</head>
+
+<body>
+    <h1>Bienvenue dans le room {{ room }}</h1>
+
+    <div id="message"></div>
+
+    <form id="message_input_form">
+        <input type="text" id="message_input" placeholder="Entrer votre message">
+        <button type="submit">Envoyer</button>
+    </form>
+</body>
+<script src="/socket.io.js"></script>
+<script>
+    const socket = io.connect("http://127.0.0.1:5000");
+
+    socket.on('connect', function () {
+        socket.emit('join_room', {
+            username: "{{ username }}",
+            room: "{{ room }}"
+        });
+
+        let message_input = document.getElementById('message_input');
+
+        document.getElementById('message_input_form').onsubmit = function (e) {
+            e.preventDefault();
+            let message = message_input.value.trim();
+            if(message.length) {
+                socket.emit('envoie_message', {
+                    username: "{{ username }}",
+                    room: "{{ room }}",
+                    message: message
+                })
+            }
+            message_input.value = '';
+            message_input.focus();
+
+        }
+    });
+
+    socket.on('recu_msg', function (data){
+        console.log(data);
+        const newNode = document.createElement('div');
+        newNode.innerHTML = `<b>${data.username}:&nbsp;</b> ${data.message}`;
+        document.getElementById('message').appendChild(newNode);  
+    });
+
+    socket.on('annoncement_join_room', function (data) {
+        console.log(data);
+        const newNode = document.createElement('div');
+        newNode.innerHTML = `<b>${data.username}</b> a rejoin le room`;
+        document.getElementById('message').appendChild(newNode); 
+    })
+</script>
+</html>
